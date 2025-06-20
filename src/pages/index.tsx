@@ -1,5 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import supabase from "@/lib/db";
 import { IMenu } from "@/types/menu";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export default function Home() {
@@ -16,12 +19,34 @@ export default function Home() {
     
   }, [supabase])
 
-  console.log(menus)
-  
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline">Hello world!</h1>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-4">Menu</h1>
+      <div className="grid-cols-1 lg:grid-cols-3 gap-4 grid">
+        {menus.map((menu) => (
+          <Card key={menu.id}>
+            <CardContent>
+              <Image
+                src={menu.image}
+                alt={menu.name}
+                width={500}
+                height={500}
+              />
+              <div className="mt-4 flex justify-between">
+                <div className="">
+                  <h4 className="font-semibold text-xl">{menu.name}</h4>
+                  <p>{menu.category}</p>
+                </div>
+                  <p className="font-semibold text-xl">Rp{menu.price?.toLocaleString("id-ID")}</p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full font-bold" size={"lg"}>Detail Menu</Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
