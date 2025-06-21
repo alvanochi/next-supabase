@@ -1,16 +1,23 @@
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectValue, SelectTrigger } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import supabase from "@/lib/db";
 import { IMenu } from "@/types/menu";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function AdminPage() {
 
     const [menus, setMenus] = useState<IMenu[]>([]);
+    const [createDialog, setCreateDialog] = useState(false);
 
     useEffect(() => {
         const fetchMenus = async () => {
@@ -23,12 +30,107 @@ export default function AdminPage() {
         
     }, [supabase])
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+
+        console.log(formData)
+
+        try {
+            const { data, error } = await supabase.from("menus").insert(Object.fromEntries(formData)).select()
+            if(error) console.log(error);
+            else {
+                if(data) {
+                    setMenus((prev) => [...prev, ...data]);
+                }
+
+                toast.success("Menu berhasil ditambahkan");
+                setCreateDialog(false);
+            }
+        } catch(err) {
+            console.error(err)
+        }
+    }
+
 
     return (
         <div className="container mx-auto py-8">
             <div className="mb-4 flex justify-between w-full">
                 <h1 className="text-3xl font-bold">Menu</h1>
-                <Button>Add Menu</Button>
+                <Dialog open={createDialog} onOpenChange={setCreateDialog}>
+                    <DialogTrigger asChild>
+                        <Button>Tambah Menu</Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                        <form onSubmit={handleSubmit}>
+                            <DialogHeader>
+                                <DialogTitle>Tambah Menu</DialogTitle>
+                                <DialogDescription>
+                                    Tambah menu baru dengan menambah data di sini.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid w-full gap-4 my-4">
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="name">Nama</Label>
+                                    <Input
+                                        name="name"
+                                        id="name"
+                                        type="text"
+                                        placeholder="Nama Menu"
+                                    />
+                                </div>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="price">Harga</Label>
+                                    <Input
+                                        name="price"
+                                        id="price"
+                                        type="number"
+                                        placeholder="Harga Menu"
+                                    />
+                                </div>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="image">Gambar</Label>
+                                    <Input
+                                        name="image"
+                                        id="image"
+                                        type="text"
+                                        placeholder="Masukkan Link Gambar"
+                                    />
+                                </div>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="category">Ketegori</Label>
+                                    <Select required name="category"> 
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Pilih Kategori" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectLabel>Kategori</SelectLabel>
+                                                <SelectItem value="Food">Food</SelectItem>
+                                                <SelectItem value="Dessert">Dessert</SelectItem>
+                                                <SelectItem value="Coffee">Coffee</SelectItem>
+                                                <SelectItem value="Non Coffee">Non Coffee</SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                 <div className="grid w-full gap-2">
+                                    <Label htmlFor="description">Deskripsi</Label>
+                                    <Textarea
+                                        name="description"
+                                        id="description"
+                                        className="resize-none h-32"
+                                        placeholder="Masukkan Link Gambar"
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose className="cursor-pointer mr-4" type="button">Batal</DialogClose>
+                                <Button className="cursor-pointer" type="submit">Tambah</Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
 
             </div>
             <div className="">
