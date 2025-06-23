@@ -25,14 +25,14 @@ export default function AdminPage() {
 
     useEffect(() => {
         const fetchMenus = async () => {
-        const { data, error } = await supabase.from("menus").select("*");
-        if(error) console.log(error);
-        else setMenus(data);
+            const { data, error } = await supabase.from("menus").select("*");
+            if(error) console.log(error);
+            else setMenus(data);
         }
 
         fetchMenus();
         
-    }, [supabase])
+    }, [supabase, setMenus]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -50,6 +50,28 @@ export default function AdminPage() {
 
                 toast.success("Menu berhasil ditambahkan");
                 setCreateDialog(false);
+            }
+        } catch(err) {
+            console.error(err)
+        }
+    }
+
+
+    const handleEditMenu = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+
+        console.log(formData)
+
+        try {
+            const { error } = await supabase.from("menus").update(Object.fromEntries(formData)).eq("id", selectedMenu?.menu.id)
+            if(error) console.log(error);
+            else {
+                toast.success("Menu berhasil diubah");
+                setSelectedMenu(null);
+                setMenus((prev) => prev.map((menu) => (
+                    menu.id === selectedMenu?.menu.id ? { ...menu, ...Object.fromEntries(formData) } : menu
+                )))
             }
         } catch(err) {
             console.error(err)
@@ -188,7 +210,7 @@ export default function AdminPage() {
                                             <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem className="cursor-pointer">Update</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setSelectedMenu({ menu, action: "edit" })} className="cursor-pointer">Edit</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => setSelectedMenu({ menu, action: "delete" })} className="cursor-pointer text-red-500">Delete</DropdownMenuItem>
                                             </DropdownMenuGroup>
                                         </DropdownMenuContent>
@@ -209,9 +231,85 @@ export default function AdminPage() {
                                 </DialogDescription>
                             </DialogHeader>
                             <DialogFooter>
-                                <DialogClose className="cursor-pointer mr-4" type="button">Batal</DialogClose>
+                                <DialogClose className="cursor-pointer px-4 mr-4" type="button">Batal</DialogClose>
                                 <Button className="cursor-pointer" onClick={handleDeleteMenu} variant="destructive" type="button">Hapus</Button>
                             </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={selectedMenu !== null && selectedMenu.action === "edit"}  onOpenChange={(open) => open !== true && setSelectedMenu(null)}>
+                    <DialogContent className="sm:max-w-md">
+                        <form onSubmit={handleEditMenu}>
+                            <DialogHeader>
+                                <DialogTitle>Edit Menu</DialogTitle>
+                                <DialogDescription>
+                                    Edit menu {selectedMenu?.menu.name}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid w-full gap-4 my-4">
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="name">Nama</Label>
+                                    <Input
+                                        name="name"
+                                        id="name"
+                                        type="text"
+                                        placeholder="Nama Menu"
+                                        defaultValue={selectedMenu?.menu.name}
+                                    />
+                                </div>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="price">Harga</Label>
+                                    <Input
+                                        name="price"
+                                        id="price"
+                                        type="number"
+                                        placeholder="Harga Menu"
+                                        defaultValue={selectedMenu?.menu.price}
+                                    />
+                                </div>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="image">Gambar</Label>
+                                    <Input
+                                        name="image"
+                                        id="image"
+                                        type="text"
+                                        placeholder="Masukkan Link Gambar"
+                                        defaultValue={selectedMenu?.menu.image}
+                                    />
+                                </div>
+                                <div className="grid w-full gap-2">
+                                    <Label htmlFor="category">Ketegori</Label>
+                                    <Select required name="category" defaultValue={selectedMenu?.menu.category}> 
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Pilih Kategori" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectLabel>Kategori</SelectLabel>
+                                                <SelectItem value="Food">Food</SelectItem>
+                                                <SelectItem value="Dessert">Dessert</SelectItem>
+                                                <SelectItem value="Coffee">Coffee</SelectItem>
+                                                <SelectItem value="Non Coffee">Non Coffee</SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                 <div className="grid w-full gap-2">
+                                    <Label htmlFor="description">Deskripsi</Label>
+                                    <Textarea
+                                        name="description"
+                                        id="description"
+                                        className="resize-none h-32"
+                                        placeholder="Deskripsi menu"
+                                        defaultValue={selectedMenu?.menu.description}
+                                    />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose className="cursor-pointer mr-4" type="button">Batal</DialogClose>
+                                <Button className="cursor-pointer" type="submit">Edit</Button>
+                            </DialogFooter>
+                        </form>
                     </DialogContent>
                 </Dialog>
         </div>
