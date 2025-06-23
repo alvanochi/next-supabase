@@ -18,6 +18,10 @@ export default function AdminPage() {
 
     const [menus, setMenus] = useState<IMenu[]>([]);
     const [createDialog, setCreateDialog] = useState(false);
+    const [selectedMenu, setSelectedMenu] = useState<{
+        menu: IMenu;
+        action: "edit" | "delete";
+    } | null>(null);
 
     useEffect(() => {
         const fetchMenus = async () => {
@@ -51,6 +55,27 @@ export default function AdminPage() {
             console.error(err)
         }
     }
+
+
+    const handleDeleteMenu = async () => {
+
+        try {
+            const { data, error } = await supabase.from("menus").delete().eq("id", selectedMenu?.menu.id)
+            if(error) console.log(error);
+            else {
+                if(data) {
+                    setMenus((prev) => prev.filter((menu) => menu.id !== selectedMenu?.menu.id));
+                }
+
+                toast.success("Menu berhasil dihapus");
+                setSelectedMenu(null);
+            }
+        } catch(err) {
+            console.error(err)
+        }
+    }
+
+    
 
 
     return (
@@ -120,7 +145,7 @@ export default function AdminPage() {
                                         name="description"
                                         id="description"
                                         className="resize-none h-32"
-                                        placeholder="Masukkan Link Gambar"
+                                        placeholder="Deskripsi menu"
                                     />
                                 </div>
                             </div>
@@ -131,8 +156,8 @@ export default function AdminPage() {
                         </form>
                     </DialogContent>
                 </Dialog>
-
             </div>
+
             <div className="">
                 <Table>
                     <TableHeader>
@@ -163,8 +188,8 @@ export default function AdminPage() {
                                             <DropdownMenuLabel className="font-bold">Actions</DropdownMenuLabel>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuGroup>
-                                                <DropdownMenuItem>Update</DropdownMenuItem>
-                                                <DropdownMenuItem className="text-red-500">Remove</DropdownMenuItem>
+                                                <DropdownMenuItem className="cursor-pointer">Update</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setSelectedMenu({ menu, action: "delete" })} className="cursor-pointer text-red-500">Delete</DropdownMenuItem>
                                             </DropdownMenuGroup>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -175,6 +200,20 @@ export default function AdminPage() {
                 </Table>
             </div>
 
+                <Dialog open={selectedMenu !== null && selectedMenu.action === "delete"} onOpenChange={(open) => open !== true && setSelectedMenu(null)}>
+                    <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Hapus Menu</DialogTitle>
+                                <DialogDescription>
+                                    Apakah anda yakin ingin hapus menu {selectedMenu?.menu.name}?
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                                <DialogClose className="cursor-pointer mr-4" type="button">Batal</DialogClose>
+                                <Button className="cursor-pointer" onClick={handleDeleteMenu} variant="destructive" type="button">Hapus</Button>
+                            </DialogFooter>
+                    </DialogContent>
+                </Dialog>
         </div>
 
     );
